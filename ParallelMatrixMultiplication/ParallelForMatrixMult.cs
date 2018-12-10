@@ -52,6 +52,50 @@ namespace ParallelMatrixMultiplication
             }); // Parallel.For
         }
 
+        public void MultiplyMatricesParallelTwo(double[,] matA, double[,] matB, double[,] result)
+        {
+            int matACols = matA.GetLength(1);
+            int matBCols = matB.GetLength(1);
+            int matARows = matA.GetLength(0);
+
+            // A basic matrix multiplication.
+            // Parallelize the outer loop to partition the source array by rows.
+            Parallel.For(0, matARows, i =>
+            {
+                Parallel.For(0, matBCols, j =>
+                 {
+                     double temp = 0;
+                     for (int k = 0; k < matACols; k++)
+                     {
+                         temp += matA[i, k] * matB[k, j];
+                     }
+                     result[i, j] = temp;
+                 });
+            }); // Parallel.For
+        }
+
+        public void MultiplyMatricesParallelAll(double[,] matA, double[,] matB, double[,] result)
+        {
+            int matACols = matA.GetLength(1);
+            int matBCols = matB.GetLength(1);
+            int matARows = matA.GetLength(0);
+
+            // A basic matrix multiplication.
+            // Parallelize the outer loop to partition the source array by rows.
+            Parallel.For(0, matARows, i =>
+            {
+                Parallel.For(0, matBCols, j =>
+                {
+                    double temp = 0;
+                    Parallel.For(0, matACols, k =>
+                    {
+                        temp += matA[i, k] * matB[k, j];
+                    });
+                    result[i, j] = temp;
+                });
+            }); // Parallel.For
+        }
+
         public List<long> RunMatrixMultWithTime(double[,] m1, double[,] m2)
         {
 
@@ -77,8 +121,16 @@ namespace ParallelMatrixMultiplication
             stopwatch.Stop();
             times.Add(stopwatch.ElapsedMilliseconds);
 
-            // Keep the console window open in debug mode.
-            Console.Error.WriteLine("Press any key to exit.");
+            stopwatch = Stopwatch.StartNew();
+            MultiplyMatricesParallelTwo(m1, m2, result);
+            stopwatch.Stop();
+            times.Add(stopwatch.ElapsedMilliseconds);
+
+            stopwatch = Stopwatch.StartNew();
+            MultiplyMatricesParallelAll(m1, m2, result);
+            stopwatch.Stop();
+            times.Add(stopwatch.ElapsedMilliseconds);
+
             return times;
         }
     }

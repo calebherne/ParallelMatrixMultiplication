@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -21,20 +22,59 @@ namespace ParallelMatrixMultiplication
 
         public long RunTaskMatrix()
         {
-            Task[] taskList = new Task[MatA.GetLength(0)];
+            //long initial = GC.GetTotalMemory(false);
+            //long[] mem = new long[100];
+
             Stopwatch stopwatch = Stopwatch.StartNew();
+            Task[] taskList = new Task[MatA.GetLength(0)];
             for(int i = 0; i < MatA.GetLength(0); i++)
             {
                 var temp = i;
                 var task = new Task(() => {
                     MultiplyOneRow(temp);
+                    //mem[temp] = GC.GetTotalMemory(false) - initial;
                 });
                 task.Start();
                 taskList[i] = task;
             }
             Task.WaitAll(taskList);
             stopwatch.Stop();
-            
+
+            //Console.WriteLine("Memory Increase due to task parallel implementation:" + mem.Max());
+            return stopwatch.ElapsedMilliseconds;
+        }
+
+        public long SetupTime()
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            Task[] taskList = new Task[MatA.GetLength(0)];
+            for (int i = 0; i < MatA.GetLength(0); i++)
+            {
+                var temp = i;
+                var task = new Task(() => {
+                    MultiplyOneRow(temp);
+                });
+                taskList[i] = task;
+            }
+            stopwatch.Stop();
+
+            return stopwatch.ElapsedMilliseconds;
+        }
+
+        public long ParrallelSetupTime()
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            Task[] taskList = new Task[MatA.GetLength(0)];
+            Parallel.For(0, MatA.GetLength(0)-1, i =>
+            {
+                var temp = i;
+                var task = new Task(() => {
+                    MultiplyOneRow(temp);
+                });
+                taskList[i] = task;
+            });
+            stopwatch.Stop();
+
             return stopwatch.ElapsedMilliseconds;
         }
 
